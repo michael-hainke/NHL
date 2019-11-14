@@ -1,66 +1,36 @@
-# Packages
+### Packages ###
+################
+
 library(tidyverse) # data manipulation and plotting
 library(gganimate) # chart animation
 library(viridis)   # colour palettes
 library(gifski)    # image rendering
 library(png)       # image rendering
-library(rvest)     # web scraping
 
-# Variables
-path <- '//*[(@id = "div_skaters")]/table[1]'
-names <- c('Player','Age','Pos','GP','G','A','Pts','+/-','PIM','Goals-EV','Goals-PP','Goals-SH','Goals-GW','Assists-EV','Assists-PP',
-           'Assists-SH','S','S%','TOI','ATOI','OPS','DPS','PS')
+### LOAD AND PREP DATA ###
+##########################
 
-team <- 'VAN'
-team_name <- 'Vancouver Canucks'
-seasons <- c(1971:2004,2006:2019)
+team_name <- 'Vancouver Canucks' 
 
-team <- 'STL'
-team_name <- 'St. Louis Blues'
-seasons <- c(1968:2004,2006:2019)
+# Load previously scraped API data
+games <- readRDS('../Data/games.rds') %>%
+         mutate(fullName = case_when(id == 8444894 ~ 'Greg D Adams',
+                                     id == 8444898 ~ 'Greg C Adams',
+                                     TRUE ~ fullName),
+                season = paste0(substr(season,1,4),"-",substr(season,5,8)))
 
-# Scrape scoring for each year and combine
-stats <- NULL
-for (i in seasons) {
-  
-  url <- paste0("https://www.hockey-reference.com/teams/",team,"/",i,".html")
-  
-  df <- url %>%
-    read_html() %>%
-    html_nodes(xpath=path) %>%
-    html_table()
-  
-  df <- as.data.frame(df[[1]])
-  df <- df[2:(nrow(df)-1),2:24]
-  colnames(df) <- names
-  df <- mutate(df, season = paste0(i-1,'-',i))
-  
-  if (length(stats) == 0)
-  { stats <- df } else
-  { stats <- rbind(stats, df) }
-  
-}
-
-# Remove Asterisks
-stats$Player <- gsub("[*]","",stats$Player)
-
-# VAN ONLY - Add middle initials to distinguish both Greg Adams
-stats <- mutate(stats, Player = case_when(Player == 'Greg Adams' & Pts == 6 ~ 'Greg C Adams',
-                                          Player == 'Greg Adams' ~ 'Greg D Adams',
-                                          TRUE ~ Player))
-
-# Save data
-saveRDS(stats, file = paste0(team,'_Scoring.rds'))
-
-# Summarize total career points by year for each player
-plot_df <- select(stats, Player, Pts, season) %>%
-           group_by(Player) %>%
-           mutate(Total_Pts = cumsum(Pts),
-                  First_Season = min(season),
-                  Last_Season = max(season),
-                  Career_Pts = max(Total_Pts)) %>%
-           select(-Pts) %>%
-           spread(key = season, value = Total_Pts, fill = 0)
+# Data Prep
+plot_df <- filter(games, team.name == team_name) %>%
+         group_by (season, fullName) %>%
+         summarise(Pts = sum(stat.points)) %>%
+         select(Player = fullName, Pts, season) %>%
+         group_by(Player) %>%
+         mutate(Total_Pts = cumsum(Pts),
+                First_Season = min(season),
+                Last_Season = max(season),
+                Career_Pts = max(Total_Pts)) %>%
+         select(-Pts) %>%
+         spread(key = season, value = Total_Pts, fill = 0)
 
 plot_df <- gather(plot_df, season, Total_Pts, 5:dim(plot_df)[2]) %>%
            mutate(Total_Pts = case_when(season > Last_Season ~ Career_Pts,
@@ -75,6 +45,9 @@ plot_df <- group_by(plot_df, season) %>%
            group_by(season) %>% 
            filter(rank <=10) %>%
            ungroup()
+
+### GENERATE CHARTS ###
+#######################
 
 # Create Static Plot
 staticplot = ggplot(plot_df, aes(rank, group = Player, 
@@ -118,6 +91,9 @@ anim = staticplot + transition_states(season, transition_length = 4, state_lengt
 
 # Render Plot
 animate(anim, fps = 10, duration = 45, width = 600, height = 400, end_pause = 100, detail = 1, rewind = FALSE,
-        renderer = gifski_renderer(paste0(team,"_alltime.gif")))
+        renderer = gifski_renderer(paste0(gsub(' ','_',team_name),"_alltime.gif")))
+
+
+
 
 

@@ -1,8 +1,8 @@
 # NHL
 
-This repository contains script to query the extensive data from the NHL API.  Also has some script for various analysis, and an 'expected goals' xG model.
+This repository contains scripts for a variety of NHL analyses.
 
-## NHL API
+## 1 - NHL API
 
 These are a variety of scripts to get different NHL data using the NHL API.  All scripts are saving output data into the 'Data' folder.  For data files beginning with a date, this is the latest update date, run the script and change dates to get newer data if required.  Some of the scripts require updated data from another script, ie play by play and shift data needs the complete game schedule data.  See below for more details.
 
@@ -23,3 +23,15 @@ Full play by play data for faceoffs, shots, goals, hits, etc. including players 
 
 ### nhl-read_shift_data.R
 Shift data for each player, including player, team, shift number, start time, end time and duration.  This data can be used to determine 5v5, 5v4 etc.  Uses schedule data ('games.rds') and queries all shifts for each game.  Due to size of dataframe, this is split into files for each calendar year, **'shifts_2020.rds'**.  The current year data is preceded by the last update date.
+
+## 2 - xG (Expected Goals) Model
+
+This folder contains my first crack at building a simple xG model using publicly available data from the NHL API.  Model is a 4 feature logistic regression using a WOE transformation, with an AUC of approximately 72%.  Will document here more fully in the near future.
+
+## 3 - Other Analyses
+
+### Scoring Bar Charts
+This is a script to create those cool animated bar charts showing changes over time.  I used to create some team level overall scoring year over year, to visualize the franchise scoring leaders over time
+
+### First to Forty
+A script to calculate the players who took the least number of games to get to 40 points in a season.

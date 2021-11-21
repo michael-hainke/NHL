@@ -26,7 +26,7 @@ play_data <- c("plays_2011.rds",
                "plays_2020.rds")
 ```
 
-One we have the data, we need to do some pre-processing on it.  First we filter to only shot and goal events to train our model.  Unfortunately we can't use blocked shots, since it notes the location of the shot block, not the original block.  Also we are not able to use missed shots, since frustratingly the NHL data doesn't include the shot type for a missed shot, which is a key feature of our model.
+One we have the data, we need to do some pre-processing on it.  First, we filter to only shot and goal events to train our model.  Unfortunately we can't use blocked shots, since it notes the location of the shot block, not the original shot.  Also we are not able to use missed shots, since frustratingly the NHL data doesn't include the shot type for a missed shot, which is a key feature of our model.
 We also exclude all period == 5 events, as those are shootout events.
 Next we calculate shot distance and angle from the x and y location of each shot.  Note that centre ice is 0,0 and the goal line is at x=89.  For shots that recorded at x>89, ie behind the net, we change those to goal line shots at 89ft.  Y locations are + and - for left and right wing, we use a net width of 6 ft (+/- 3 ft) from centre, and calculate the angle from the closest edge of the net.
 Finally, we create a helper variable of time in seconds from period start and then calculate the delay from the previous shot.  The assumption is that shots in short duration, ie rebounds, will result in a higher xG probability.

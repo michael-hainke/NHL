@@ -41,4 +41,102 @@ For this model we then do a WOE transformation on each feature, the method is de
 
 This creates our WOE tables for each feature, and then I use a for loop to extract all the woe tables and transform each variable based on it's value, and create new transformed columns with a "woe" suffix and select only those for our training.  Below are the information values (IV) for each feature, looks like all are significant and the most important variable is shot distance
 
-![alt text](image.jpg)
+![IV Chart](Images/IV.png)
+
+I wouldn't expect any of the features chosen to be closely correlated with each other, but let's check with a correlation plot
+
+![Correlation Plot](Images/corr_plot.png)
+
+### Train Model
+
+To train the model on the WOE transformed data, I took a sample of 100k observations from the overall shot attempt total of around 750k.  I didn't use the entire sample mainly to increase the speed of training the model.  I split the data into a standard 75% training and 25% testing, and setup a cross validation using 10 folds.  Then the code below sets up the model pipeline for training and tuning which allows you to choose 3 algorithms for training (LR = Logistic Regression, RF = Random Forest, XGB = XGBoost).  For this model I chose LR as it produces a good model with minimal training time, using a Lasso regularization to tune a penalty factor to simplify our model if possible and reduce overfitting.
+
+```
+if (algorithm == "LR") {
+  mod <- logistic_reg(penalty = tune(), mixture = 1) %>%
+         set_engine("glmnet")
+  mod_grid <- tibble(penalty = 10^seq(-4, -1, length.out = 30))
+} else if (algorithm == 'RF') {
+  mod <- rand_forest(mtry = tune(), min_n = tune(), trees = tune()) %>% 
+         set_engine("ranger", importance = "permutation") %>% 
+         set_mode("classification")
+  mod_grid <- mod %>%
+              parameters() %>%
+              finalize(select(sample_df,-Event,-one_of(id_names))) %>%
+              grid_max_entropy(size = 10)
+} else if (algorithm == 'XGB') {
+  mod <- boost_tree(
+         trees = 4,
+         tree_depth = tune(), min_n = tune(),
+         loss_reduction = tune(),                     ## first three: model complexity
+         sample_size = tune(), mtry = tune(),         ## randomness
+         learn_rate = tune(),                         ## step size
+  ) %>%
+    set_engine("xgboost") %>%
+    set_mode("classification")
+  mod_grid <- grid_latin_hypercube(
+    tree_depth(),
+    min_n(),
+    loss_reduction(),
+    sample_size = sample_prop(),
+    finalize(mtry(), train_data),
+    learn_rate(),
+    size = 30
+  )
+}
+```
+
+I then add this model to my tidymodels 'recipe', and also apply the ROSE algorithm to help balance our dataset by creating synthetic samples.  Our 'Event' of a goal represents about 10% of total sample, so not sure if this step is actually needed for our dataset, but I left it in for this iteration.  Finally, let's do some magic by training and tuning our model and setting our evaluation metrics to AUC, Accuracy, Sensitivity and Specificity so we can judge how good our model is.  I then choose the best model based on best AUC score.
+
+```
+metric_list <- metric_set(roc_auc, accuracy, sens, spec)
+
+res <- pred_wflow %>%
+       tune_grid(resamples = folds,
+                 grid = mod_grid,
+                 control = control_grid(save_pred = TRUE, event_level = "second"),
+                 metrics = metric_list)
+
+best_tune <- res %>% select_best("roc_auc")
+```
+
+### Train Model
+
+Finally, I evaluate our model on unseen data from our holdout test set using our best tune.
+
+```
+final_fit <- final_wflow %>%
+             last_fit(data_split, metrics = metric_list)
+```
+
+Below is the ROC chart our final model, with an **AUC of 71.5%**.  This isn't bad for a first try with only a few features, will try to improve that in future iterations.
+
+![ROC](Images/roc.png)
+
+Taking a look at our feature importance, it shows that, not surprisingly, distance to goal is the most important predictor of a goal.  What is interesting is that the model dropped the shot type feature as part of tuning process, I will investigate that further.
+
+![Variable Importance](Images/var_imp.png)
+
+Looking at the WOE charts for several of the variables, we can see some interesting trends.  The likelihood of a shot turning into a goal decreases steadily as the distance increases
+
+![Shot Distance](Images/shot_dist.png)
+
+Shot angle is also a strong predictor of a goal, with goal likelihood decreasing steadily as angle increases.  There is an exception for goals shot at greater than 33 degree angle where the probability appears to increase slightly.  Could this be skaters setting up on the power play on the hash marks for a cross ice one timer, ie setting up in the 'Petterzone'?
+
+![Shot Angle(Images/angle.png)
+
+Finally, let's look at time between shots.  Here we see the effect of the rebound, where shots taken within 5 seconds of the previous shot have a much higher likelihood to result in a goal.
+
+![Shot Timing(Images/last_shot.png)
+
+### Save Final Model
+
+As a last step, I save the model and woe tables in .rds format.  This will allow me to calculate xG values for new data, and determine just how bad the 2021-2022 Vancouver Canucks are! 
+
+```
+final_model <- final_fit$.workflow[[1]]
+saveRDS(final_model, file = paste0(Sys.Date(),"_",model_type,"_",model,"_",brand,"_",segment,"_",algorithm,"_v",revision,".rds"))
+
+saveRDS(woe_table, file = paste0(Sys.Date(),"_",model_type,"_",model,"_",brand,"_",segment,"_WOE.rds"))
+```
+

@@ -39,4 +39,6 @@ For this model we then do a WOE transformation on each feature, the method is de
 
 ` woe_table <- create_infotables(data = xg_data, y="Event") `
 
-This creates our WOE tables for each feature, and then I use a for loop to extract all the woe tables and transform each variable based on it's value, and create new transformed columns with a "woe" suffix and select only those for our training.
+This creates our WOE tables for each feature, and then I use a for loop to extract all the woe tables and transform each variable based on it's value, and create new transformed columns with a "woe" suffix and select only those for our training.  Below are the information values (IV) for each feature, looks like all are significant and the most important variable is shot distance
+
+![alt text](image.jpg)

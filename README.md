@@ -28,7 +28,7 @@ Shift data for each player, including player, team, shift number, start time, en
 
 This folder contains my first crack at building a simple xG model using publicly available data from the NHL API.  Model is a 4 feature logistic regression using a WOE transformation, with an AUC of approximately 72%.  Will document here more fully in the near future.
 
-[xG Goal Documentation](xG Model/xg_model.md)
+[xG Goal Documentation](https://github.com/michael-hainke/NHL/blob/master/xG%20Model/xG_model.md)
 
 ## 3 - Other Analyses
 

@@ -102,7 +102,7 @@ res <- pred_wflow %>%
 best_tune <- res %>% select_best("roc_auc")
 ```
 
-### Train Model
+### Test and Evaluate Model
 
 Finally, I evaluate our model on unseen data from our holdout test set using our best tune.
 

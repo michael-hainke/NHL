@@ -142,3 +142,6 @@ saveRDS(final_model, file = paste0(Sys.Date(),"_",model_type,"_",model,"_",brand
 saveRDS(woe_table, file = paste0(Sys.Date(),"_",model_type,"_",model,"_",brand,"_",segment,"_WOE.rds"))
 ```
 
+### Next Steps
+
+So that is my first crack at building an xG model.  In addition to some of the notes above, I will try improving model performance by adding more features by incorporating shift data to include whether a team is on power play or short handed during shot attempt.  Will also look to see if can figure out pre shot movement by including where the previous event (goals and non goals) took place, to see shot is taking place 'on the rush'.

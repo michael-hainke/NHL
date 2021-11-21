@@ -33,7 +33,8 @@ Finally, we create a helper variable of time in seconds from period start and th
 
 ### WOE (Weight of Evidence) Transformation
 
-For this model we then do a WOE transformation on each feature, the method is described in detail here: [https://www.listendata.com/2015/03/weight-of-evidence-woe-and-information.html](https://www.listendata.com/2015/03/weight-of-evidence-woe-and-information.html).  Some benefits of WOE is that nicely handles all our categorical values with needing any dummy variables, it will deal with missing values seamlessly, the the WOE and IV (Information Value) scores will give us some indication of feature importance.
+For this model we then do a WOE transformation on each feature, the method is described in detail here: [https://www.listendata.com/2015/03/weight-of-evidence-woe-and-information.html](https://www.listendata.com/2015/03/weight-of-evidence-woe-and-information.html).
+Some benefits of WOE is it that nicely handles all our categorical values with needing any dummy variables, it will deal with missing values seamlessly, the the WOE and IV (Information Value) scores will give us some indication of feature importance.
 
 ` library(Information) # WOE and IV functions `
 

@@ -123,11 +123,11 @@ Looking at the WOE charts for several of the variables, we can see some interest
 
 Shot angle is also a strong predictor of a goal, with goal likelihood decreasing steadily as angle increases.  There is an exception for goals shot at greater than 33 degree angle where the probability appears to increase slightly.  Could this be skaters setting up on the power play on the hash marks for a cross ice one timer, ie setting up in the 'Petterzone'?
 
-![Shot Angle(Images/angle.png)
+![Shot Angle](Images/angle.png)
 
 Finally, let's look at time between shots.  Here we see the effect of the rebound, where shots taken within 5 seconds of the previous shot have a much higher likelihood to result in a goal.
 
-![Shot Timing(Images/last_shot.png)
+![Shot Timing](Images/last_shot.png)
 
 ### Save Final Model
 

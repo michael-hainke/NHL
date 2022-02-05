@@ -26,14 +26,16 @@ play_data <- c("plays_2011.rds",
                "plays_2020.rds")
 ```
 
-One we have the data, we need to do some pre-processing on it.  First we filter to only shot and goal events to train our model.  Unfortunately we can't use blocked shots, since it notes the location of the shot block, not the original block.  Also we are not able to use missed shots, since frustratingly the NHL data doesn't include the shot type for a missed shot, which is a key feature of our model.
+One we have the data, we need to do some pre-processing on it.  First, we filter to only shot and goal events to train our model.  Unfortunately we can't use blocked shots, since it notes the location of the shot block, not the original shot.  Also we are not able to use missed shots, since frustratingly the NHL data doesn't include the shot type for a missed shot, which is a key feature of our model.
 We also exclude all period == 5 events, as those are shootout events.
 Next we calculate shot distance and angle from the x and y location of each shot.  Note that centre ice is 0,0 and the goal line is at x=89.  For shots that recorded at x>89, ie behind the net, we change those to goal line shots at 89ft.  Y locations are + and - for left and right wing, we use a net width of 6 ft (+/- 3 ft) from centre, and calculate the angle from the closest edge of the net.
 Finally, we create a helper variable of time in seconds from period start and then calculate the delay from the previous shot.  The assumption is that shots in short duration, ie rebounds, will result in a higher xG probability.
 
 ### WOE (Weight of Evidence) Transformation
 
-For this model we then do a WOE transformation on each feature, the method is described in detail here: [https://www.listendata.com/2015/03/weight-of-evidence-woe-and-information.html](https://www.listendata.com/2015/03/weight-of-evidence-woe-and-information.html).  Some benefits of WOE is that nicely handles all our categorical values with needing any dummy variables, it will deal with missing values seamlessly, the the WOE and IV (Information Value) scores will give us some indication of feature importance.
+For this model we then do a WOE transformation on each feature, the method is described in detail here: [https://www.listendata.com/2015/03/weight-of-evidence-woe-and-information.html](https://www.listendata.com/2015/03/weight-of-evidence-woe-and-information.html).
+
+Some benefits of WOE is it that nicely handles all our categorical values with needing any dummy variables, will deal with missing values seamlessly, and the the WOE and IV (Information Value) scores will give us some measure of feature importance.
 
 ` library(Information) # WOE and IV functions `
 
@@ -100,7 +102,7 @@ res <- pred_wflow %>%
 best_tune <- res %>% select_best("roc_auc")
 ```
 
-### Train Model
+### Test and Evaluate Model
 
 Finally, I evaluate our model on unseen data from our holdout test set using our best tune.
 
@@ -123,11 +125,11 @@ Looking at the WOE charts for several of the variables, we can see some interest
 
 Shot angle is also a strong predictor of a goal, with goal likelihood decreasing steadily as angle increases.  There is an exception for goals shot at greater than 33 degree angle where the probability appears to increase slightly.  Could this be skaters setting up on the power play on the hash marks for a cross ice one timer, ie setting up in the 'Petterzone'?
 
-![Shot Angle(Images/angle.png)
+![Shot Angle](Images/angle.png)
 
 Finally, let's look at time between shots.  Here we see the effect of the rebound, where shots taken within 5 seconds of the previous shot have a much higher likelihood to result in a goal.
 
-![Shot Timing(Images/last_shot.png)
+![Shot Timing](Images/last_shot.png)
 
 ### Save Final Model
 
@@ -135,8 +137,11 @@ As a last step, I save the model and woe tables in .rds format.  This will allow
 
 ```
 final_model <- final_fit$.workflow[[1]]
-saveRDS(final_model, file = paste0(Sys.Date(),"_",model_type,"_",model,"_",brand,"_",segment,"_",algorithm,"_v",revision,".rds"))
+saveRDS(final_model, file = paste0(Sys.Date(),"_NHL_XGMODEL_",algorithm,"_v",revision,".rds"))
 
-saveRDS(woe_table, file = paste0(Sys.Date(),"_",model_type,"_",model,"_",brand,"_",segment,"_WOE.rds"))
+saveRDS(woe_table, file = paste0(Sys.Date(),"_NHL_XGMODEL_WOE.rds"))
 ```
 
+### Next Steps
+
+So that is my first crack at building an xG model.  In addition to some of the notes above, I will try improving model performance by adding more features by incorporating shift data to include whether a team is on power play or short handed during shot attempt.  Will also look to see if can figure out pre shot movement by including where the previous event (goals and non goals) took place, to see shot is taking place 'on the rush'.

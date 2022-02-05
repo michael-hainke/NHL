@@ -7,7 +7,7 @@ library(jsonlite)
 library(lubridate)
 
 # Set Parameters
-schedule_filename = "2021-11-14_schedule.rds"
+schedule_filename = "2021-11-14_schedule.rds"  # this file has schedule to end of 2021/22 regular season
 
 ## Download play by play data ##
 ################################
@@ -15,8 +15,8 @@ schedule_filename = "2021-11-14_schedule.rds"
 ## Load schedule data
 games <- readRDS(paste0('../Data/',schedule_filename))
 
-## Filter to 2011 and later (first season that had coordinate data)
-games <- filter(games, gameDate > '2011-09-01' & gameDate < Sys.Date())
+## Filter to 2011 and later (first season that had coordinate data) or whatever date range you are looking for
+games <- filter(games, gameDate > '2021-09-01' & gameDate < Sys.Date() & gameType == 'R')
 
 ## initialize dataframes
 df_final <- NULL
@@ -86,4 +86,4 @@ for (i in 1:length(games$gamePk)) {
 }
 
 # save file
-saveRDS(df_final, '../Data/2021-11-14_plays_2020.rds')
+saveRDS(df_final, '../Data/2022-02-03_plays_2021-2022.rds')

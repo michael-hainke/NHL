@@ -10,10 +10,19 @@ library(vip)         # model summary - importance scores
 library(probably)    # threshold tuning
 library(xgboost)     # xgboost algorithm
 
+# Functions
+
+# Use this avoid some parallel computing errors I get when trying to tune model
+unregister_dopar <- function() {
+  env <- foreach:::.foreachGlobals
+  rm(list=ls(name=env), pos=env)
+}
+
 # Set Parameters
 
 size <- 100000     # Train & Test data sample size
-algorithm <- "LR" # Algorithm (LR, RF, XGB)
+algorithm <- "LR"  # Algorithm (LR, RF, XGB)
+revision <- 1      # Revision Number
 
 # Output Folder
 output_folder <- "~/GitHub/NHL/xG Model/Outputs"
@@ -256,6 +265,8 @@ pred_wflow <- workflow() %>%
 # Tune Model
 metric_list <- metric_set(roc_auc, accuracy, sens, spec)
 
+unregister_dopar()
+
 res <- pred_wflow %>%
        tune_grid(resamples = folds,
                  grid = mod_grid,
@@ -328,9 +339,9 @@ setwd(output_folder)
 
 # Save Model as .rds
 final_model <- final_fit$.workflow[[1]]
-saveRDS(final_model, file = paste0(Sys.Date(),"_",model_type,"_",model,"_",brand,"_",segment,"_",algorithm,"_v",revision,".rds"))
+saveRDS(final_model, file = paste0(Sys.Date(),"_NHL_XGMODEL_",algorithm,"_v",revision,".rds"))
 
 # Save WOE tables as .rds
-saveRDS(woe_table, file = paste0(Sys.Date(),"_",model_type,"_",model,"_",brand,"_",segment,"_WOE.rds"))
+saveRDS(woe_table, file = paste0(Sys.Date(),"_NHL_XGMODEL_WOE.rds"))
 
 

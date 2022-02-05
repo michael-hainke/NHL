@@ -137,9 +137,9 @@ As a last step, I save the model and woe tables in .rds format.  This will allow
 
 ```
 final_model <- final_fit$.workflow[[1]]
-saveRDS(final_model, file = paste0(Sys.Date(),"_",model_type,"_",model,"_",brand,"_",segment,"_",algorithm,"_v",revision,".rds"))
+saveRDS(final_model, file = paste0(Sys.Date(),"_NHL_XGMODEL_",algorithm,"_v",revision,".rds"))
 
-saveRDS(woe_table, file = paste0(Sys.Date(),"_",model_type,"_",model,"_",brand,"_",segment,"_WOE.rds"))
+saveRDS(woe_table, file = paste0(Sys.Date(),"_NHL_XGMODEL_WOE.rds"))
 ```
 
 ### Next Steps
